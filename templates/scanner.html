@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hybrid Scanner</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #0b1020;
+            --panel: rgba(16, 23, 44, 0.92);
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #eef2ff;
+            --muted: #9aa7c7;
+            --ok: #27d980;
+            --bad: #ff6b6b;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            padding: 20px;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top, rgba(124, 140, 255, 0.24), transparent 30%),
+                linear-gradient(160deg, #050816 0%, #0b1020 55%, #060912 100%);
+        }
+
+        .container {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        .panel {
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            background: var(--panel);
+            padding: 18px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+            margin-top: 14px;
+        }
+
+        #reader {
+            width: 100%;
+            min-height: 360px;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #050816;
+        }
+
+        #status {
+            margin-top: 12px;
+            padding: 14px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.04);
+            font-weight: 700;
+            min-height: 3em;
+        }
+
+        #details {
+            margin-top: 8px;
+            color: var(--muted);
+            min-height: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Volunteer Scanner</h1>
+        <div class="panel">
+            <div id="reader"></div>
+            <div id="status">Ready to scan...</div>
+            <div id="details"></div>
+        </div>
+    </div>
+
+    <script>
+        const scanner = new Html5Qrcode("reader");
+        const statusEl = document.getElementById("status");
+        const detailsEl = document.getElementById("details");
+        let busy = false;
+
+        function playTone(freq, durationMs) {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.type = "sine";
+            oscillator.frequency.value = freq;
+            gainNode.gain.value = 0.08;
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            oscillator.start();
+            setTimeout(() => {
+                oscillator.stop();
+                audioCtx.close();
+            }, durationMs);
+        }
+
+        function showSuccess(data) {
+            statusEl.style.color = "#27d980";
+            statusEl.textContent = "SUCCESS: Ticket verified";
+            detailsEl.textContent = `${data.name} • ${data.roll_number}`;
+            playTone(1046, 180);
+        }
+
+        function showError(message) {
+            statusEl.style.color = "#ff6b6b";
+            statusEl.textContent = `ERROR: ${message}`;
+            detailsEl.textContent = "";
+            playTone(220, 350);
+        }
+
+        async function verifyScannedPayload(payload) {
+            const response = await fetch("/verify_scan", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ qr_data: payload })
+            });
+            return response.json();
+        }
+
+        async function onScanSuccess(decodedText) {
+            if (busy) return;
+            busy = true;
+
+            try {
+                const data = await verifyScannedPayload(decodedText);
+                if (data.status === "success") {
+                    showSuccess(data);
+                } else {
+                    showError(data.message || "Verification failed");
+                }
+            } catch (err) {
+                showError("Scanner request failed");
+            } finally {
+                setTimeout(() => { busy = false; }, 900);
+            }
+        }
+
+        scanner.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: { width: 260, height: 260 } },
+            onScanSuccess
+        ).catch(() => {
+            showError("Camera could not start");
+        });
+    </script>
+</body>
+</html>

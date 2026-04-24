@@ -1,0 +1,10 @@
+Flask
+qrcode
+pillow
+gunicorn
+pandas
+streamlit
+psycopg2-binary
+SQLAlchemy
+resend
+pyotp

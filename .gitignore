@@ -1,0 +1,6 @@
+fest_database.db
+Tickets/
+.env
+__pycache__/
+*.pyc
+.streamlit/secrets.toml

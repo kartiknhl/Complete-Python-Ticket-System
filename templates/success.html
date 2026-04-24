@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Sent</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #0b1020;
+            --panel: rgba(16, 23, 44, 0.92);
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #eef2ff;
+            --muted: #9aa7c7;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background:
+                radial-gradient(circle at top, rgba(124, 140, 255, 0.24), transparent 30%),
+                linear-gradient(160deg, #050816 0%, #0b1020 55%, #060912 100%);
+            color: var(--text);
+            padding: 24px;
+        }
+
+        .card {
+            width: min(100%, 460px);
+            padding: 36px;
+            text-align: center;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            background: var(--panel);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(18px);
+        }
+
+        h1 {
+            margin: 0 0 10px;
+            font-size: 2rem;
+        }
+
+        p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <main class="card">
+        {% if message %}
+            <h1>{{ message }}</h1>
+            <p>The request completed successfully.</p>
+        {% else %}
+            <h1>Ticket sent to your Email!</h1>
+            <p>The attendee has been registered and their QR ticket has been delivered.</p>
+        {% endif %}
+    </main>
+</body>
+</html>
